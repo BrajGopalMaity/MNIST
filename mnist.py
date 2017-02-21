@@ -9,19 +9,19 @@ import tensorflow as tf
 LRATE = 1e-4
 
 #training iterations
-N = 10000  
+N = 25000  
 
 #dropout rate used to prevent overfitting          
-DRATE = 0.75
+DRATE = 0.5
 
 #batchsize to train in batches
 BSIZE = 50
 
 #no of images taken in crossvalidation
-VSIZE = 2000
+VSIZE = 1000
 
 #read csv data from the file and convert into a matrix
-data = pd.read_csv('/home/bgm/Desktop/Big Data/train.csv')
+data = pd.read_csv('/home/bgm/Desktop/Big Data/train4.csv')
 
 #print to check the read data
 print(data.shape)
@@ -102,8 +102,8 @@ b1 = bias([32])
 image = tf.reshape(x, [-1,imageWidth , imageHeight,1])
 
 #output of the first convolution layer through relu
-h1 = lrelu(conv2d(image, w1) + b1)
-#h1 = tf.nn.relu(conv2d(image, w1) + b1)
+#h1 = lrelu(conv2d(image, w1) + b1)
+h1 = tf.nn.relu(conv2d(image, w1) + b1)
 #after pooling to reduce dimensions to 14x14
 hp1 = max_pool(h1)
 
@@ -111,16 +111,20 @@ hp1 = max_pool(h1)
 w2 = weight([5, 5, 32, 64])
 b2 = bias([64])
 
-h2 = lrelu(conv2d(hp1, w2) + b2)
-#h2 = tf.nn.relu(conv2d(hp1, w2) + b2)
+#h2 = lrelu(conv2d(hp1, w2) + b2)
+h2 = tf.nn.relu(conv2d(hp1, w2) + b2)
 hp2 = max_pool(h2)
+
+# third 1x1 convolution layer
+w2_2 = weight([1,1,64,64])
+b2_2 = bias([64])
+h2_2 = tf.nn.relu(conv2d(hp2, w2_2)+b2_2)
 
 # fully connected layer for the second layer where imagesize is reduced to 7x7 dimension after pooling
 w3 = weight([7 * 7 * 64, 1024])
 b3 = bias([1024])
 
-# (40000, 7, 7, 64) => (40000, 3136)
-hp2_flat = tf.reshape(hp2, [-1, 7*7*64])
+hp2_flat = tf.reshape(h2_2, [-1, 7*7*64])
 
 h3 = tf.nn.relu(tf.matmul(hp2_flat, w3) + b3)
 
@@ -140,7 +144,7 @@ y = tf.nn.softmax(tf.matmul(h3_drop, w4) + b4)
 cEntropy = -tf.reduce_sum(y1*tf.log(y))
 
 # optimisation function
-steps = tf.train.GradientDescentOptimizer(LRATE).minimize(cEntropy)
+steps = tf.train.AdamOptimizer(LRATE).minimize(cEntropy)
 
 # evaluation
 actualPredict = tf.equal(tf.argmax(y,1), tf.argmax(y1,1))
@@ -249,6 +253,5 @@ np.savetxt('submission.csv', np.c_[range(1,len(test_images)+1), predicted_lables
 
 #close session
 sess.close()
-
 
 

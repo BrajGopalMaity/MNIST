@@ -12,7 +12,7 @@ LRATE = 1e-4
 N = 25000  
 
 #dropout rate used to prevent overfitting          
-DRATE = 0.5
+DRATE = 0.75
 
 #batchsize to train in batches
 BSIZE = 50
